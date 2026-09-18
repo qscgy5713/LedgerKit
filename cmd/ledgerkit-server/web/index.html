@@ -11,15 +11,34 @@
     <h1>LedgerKit</h1>
   </header>
 
-  <nav>
-    <button data-view="balance" class="active">Balance</button>
-    <button data-view="register">Register</button>
-    <button data-view="add">Add</button>
-    <button data-view="settings">Settings</button>
-  </nav>
-
   <main>
-    <section id="view-balance" class="view active">
+    <section id="view-reports" class="view active">
+      <div class="card hero-card">
+        <div class="hero-label">本月結餘</div>
+        <div class="hero-value" id="hero-net">—</div>
+        <div class="hero-sub">
+          <div class="income">收入<span class="figure" id="hero-income">—</span></div>
+          <div class="expense">支出<span class="figure" id="hero-expense">—</span></div>
+        </div>
+      </div>
+
+      <div class="section-title">收支趨勢（近 6 個月）</div>
+      <div class="card chart-card">
+        <div class="chart-legend">
+          <span><span class="swatch" style="background:var(--income)"></span>收入</span>
+          <span><span class="swatch" style="background:var(--expense)"></span>支出</span>
+        </div>
+        <div id="trend-chart"></div>
+      </div>
+
+      <div class="section-title">支出分類（本月）</div>
+      <div class="card">
+        <div class="donut-wrap" id="category-donut"></div>
+        <div id="category-legend"></div>
+      </div>
+    </section>
+
+    <section id="view-balance" class="view">
       <div id="balance-rows"></div>
       <div id="balance-total"></div>
     </section>
@@ -29,39 +48,107 @@
     </section>
 
     <section id="view-add" class="view">
-      <form id="add-form">
+      <div class="segmented" id="type-toggle">
+        <button type="button" data-type="expense" class="active">支出</button>
+        <button type="button" data-type="income">收入</button>
+      </div>
+
+      <div class="category-grid" id="category-grid"></div>
+
+      <div class="keypad-panel" id="keypad-panel" hidden>
+        <button type="button" class="keypad-back" id="keypad-back">‹ 返回分類</button>
+        <div class="keypad-display">
+          <div class="keypad-category" id="keypad-category-label"></div>
+          <div class="keypad-amount" id="keypad-amount">0</div>
+        </div>
+        <div class="keypad-fields">
+          <input type="text" id="quick-note" placeholder="備註（選填）" />
+          <input type="date" id="quick-date" />
+        </div>
+        <div class="keypad-grid">
+          <button type="button" data-key="7">7</button>
+          <button type="button" data-key="8">8</button>
+          <button type="button" data-key="9">9</button>
+          <button type="button" data-key="4">4</button>
+          <button type="button" data-key="5">5</button>
+          <button type="button" data-key="6">6</button>
+          <button type="button" data-key="1">1</button>
+          <button type="button" data-key="2">2</button>
+          <button type="button" data-key="3">3</button>
+          <button type="button" data-key=".">.</button>
+          <button type="button" data-key="0">0</button>
+          <button type="button" data-key="del">⌫</button>
+        </div>
+        <button type="button" class="primary" id="keypad-ok">確定</button>
+      </div>
+
+      <button type="button" class="link-btn" id="toggle-advanced">進階模式（自訂帳戶）</button>
+
+      <form id="advanced-form" hidden>
         <div>
-          <label for="add-date">Date</label>
-          <input type="date" id="add-date" />
+          <label for="adv-date">日期</label>
+          <input type="date" id="adv-date" />
         </div>
         <div>
-          <label for="add-desc">Description</label>
-          <input type="text" id="add-desc" placeholder="買咖啡" required />
+          <label for="adv-desc">描述</label>
+          <input type="text" id="adv-desc" placeholder="買咖啡" required />
         </div>
-        <label>Postings</label>
+        <label>過帳</label>
         <div id="postings"></div>
-        <button type="button" class="secondary" id="add-posting">+ posting</button>
-        <button type="submit" class="primary">Save</button>
-        <div id="add-status" class="status"></div>
+        <datalist id="account-suggestions"></datalist>
+        <button type="button" class="secondary" id="add-posting">+ 新增一筆過帳</button>
+        <button type="submit" class="primary">儲存</button>
       </form>
+
+      <div id="add-status" class="status"></div>
     </section>
 
     <section id="view-settings" class="view">
+      <div>
+        <label>外觀</label>
+        <div class="segmented" id="theme-toggle">
+          <button type="button" data-theme-choice="light">淺色</button>
+          <button type="button" data-theme-choice="dark">深色</button>
+        </div>
+      </div>
       <form id="settings-form">
         <div>
-          <label for="server-url">Server URL</label>
-          <input type="text" id="server-url" placeholder="http://localhost:8080 (留空 = 同一個網址)" />
+          <label for="server-url">伺服器網址</label>
+          <input type="text" id="server-url" placeholder="http://localhost:8080（留空 = 同一個網址）" />
         </div>
         <div>
           <label for="api-token">API Token</label>
           <input type="password" id="api-token" placeholder="Bearer token" />
         </div>
-        <button type="submit" class="primary">Save</button>
+        <button type="submit" class="primary">儲存</button>
         <div id="settings-status" class="status"></div>
       </form>
       <p class="hint">設定存在這台裝置的瀏覽器/App 本機儲存空間，不會同步到別的裝置。</p>
     </section>
   </main>
+
+  <nav class="tabbar">
+    <button data-view="reports" class="active">
+      <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="4" y1="20" x2="20" y2="20"/><rect x="6" y="12" width="3" height="8" fill="currentColor" stroke="none"/><rect x="11" y="7" width="3" height="13" fill="currentColor" stroke="none"/><rect x="16" y="15" width="3" height="5" fill="currentColor" stroke="none"/></svg>
+      報表
+    </button>
+    <button data-view="balance">
+      <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.79 4.5"/></svg>
+      餘額
+    </button>
+    <button data-view="add">
+      <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+      記帳
+    </button>
+    <button data-view="register">
+      <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="8" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="20" y2="12"/><line x1="8" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="12" r="1" fill="currentColor" stroke="none"/><circle cx="4" cy="18" r="1" fill="currentColor" stroke="none"/></svg>
+      明細
+    </button>
+    <button data-view="settings">
+      <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="4" y1="7" x2="20" y2="7"/><circle cx="14" cy="7" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="14" x2="20" y2="14"/><circle cx="8" cy="14" r="2" fill="currentColor" stroke="none"/><line x1="4" y1="19" x2="20" y2="19"/><circle cx="16" cy="19" r="2" fill="currentColor" stroke="none"/></svg>
+      設定
+    </button>
+  </nav>
 
   <script src="app.js"></script>
 </body>

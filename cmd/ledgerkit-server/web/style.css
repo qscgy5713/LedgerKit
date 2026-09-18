@@ -1,151 +1,445 @@
+/* Default is light, regardless of OS preference — a manual toggle in
+   Settings (data-theme="dark") is the only way into dark mode. Consumer
+   finance apps read as bright/colorful by default; auto-following a dark OS
+   preference here made every screenshot look flat and monochrome. */
 :root {
-  color-scheme: light dark;
-  --bg: #0f1115;
-  --panel: #171a21;
-  --border: #2a2e37;
-  --text: #e6e8eb;
-  --muted: #8b93a1;
-  --accent: #4f8cff;
-  --positive: #3fb950;
-  --negative: #f85149;
+  color-scheme: light;
+  --surface: #fcfcfb;
+  --page: #f4f5f7;
+  --card: #ffffff;
+  --text-primary: #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted: #898781;
+  --gridline: #e1e0d9;
+  --baseline: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.08);
+  --shadow: 0 1px 2px rgba(11, 11, 11, 0.04), 0 4px 16px rgba(11, 11, 11, 0.06);
+  --accent: #2a78d6;
+  --accent-2: #4a3aa7;
+  --income: #2a78d6;
+  --expense: #e34948;
+  --good: #006300;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface: #1a1a19;
+  --page: #0d0d0d;
+  --card: #232322;
+  --text-primary: #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted: #898781;
+  --gridline: #2c2c2a;
+  --baseline: #383835;
+  --border: rgba(255, 255, 255, 0.1);
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 4px 16px rgba(0, 0, 0, 0.35);
+  --accent: #3987e5;
+  --accent-2: #9085e9;
+  --income: #3987e5;
+  --expense: #e66767;
+  --good: #0ca30c;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background: var(--bg);
-  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--page);
+  color: var(--text-primary);
+  -webkit-tap-highlight-color: transparent;
 }
 
 header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
+  padding: 16px 16px 8px;
+  background: var(--page);
 }
 
-header h1 { font-size: 18px; margin: 0; }
-
-nav {
-  display: flex;
-  gap: 4px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--border);
-  overflow-x: auto;
-}
-
-nav button {
-  background: none;
-  border: none;
-  color: var(--muted);
-  padding: 8px 14px;
-  border-radius: 8px;
-  font-size: 14px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-nav button.active {
-  background: var(--panel);
-  color: var(--text);
-}
+header h1 { font-size: 20px; margin: 0; font-weight: 700; }
 
 main {
-  padding: 12px 16px 80px;
+  padding: 4px 16px 96px;
   max-width: 640px;
   margin: 0 auto;
+  min-height: 60vh;
 }
 
 .view { display: none; }
 .view.active { display: block; }
 
+/* Author "normal" rules (like `form { display: flex }` below) win over the
+   UA stylesheet's [hidden] rule regardless of selector specificity — origin
+   is compared before specificity in the cascade. Restate it explicitly so
+   toggling .hidden via JS actually hides flex/grid elements (the quick-add
+   panels, the advanced form). */
+[hidden] { display: none !important; }
+
+/* ---- Cards & sections ---- */
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: var(--shadow);
+}
+
+.section-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin: 20px 4px 8px;
+}
+.section-title:first-child { margin-top: 4px; }
+
+/* ---- Hero stat card (a vivid gradient, not another flat gray card) ---- */
+
+.hero-card {
+  padding: 22px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  border: none;
+  box-shadow: 0 10px 28px -8px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.hero-label { font-size: 13px; color: rgba(255, 255, 255, 0.85); font-weight: 600; }
+.hero-value {
+  font-size: 40px;
+  font-weight: 800;
+  margin-top: 6px;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+
+.hero-sub {
+  display: flex;
+  gap: 22px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.25);
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.85);
+}
+.hero-sub .figure { font-weight: 700; font-size: 15px; display: block; margin-top: 2px; color: #fff; }
+
+/* ---- Avatars & pills (colored per category, hashed from the name) ---- */
+
+.avatar {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+}
+.avatar.small { width: 22px; height: 22px; font-size: 11px; }
+
+.pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-top: 2px;
+}
+
+.balance-group-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 20px 4px 8px;
+  font-weight: 700;
+  font-size: 15px;
+}
+.balance-group-header:first-child { margin-top: 4px; }
+
+/* ---- Balance / list rows ---- */
+
 .row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 8px;
-  border-bottom: 1px solid var(--border);
-  font-size: 14px;
+  padding: 10px 4px;
+  border-bottom: 1px solid var(--gridline);
+  font-size: 15px;
 }
+.row:last-child { border-bottom: none; }
 
-.row .account { white-space: pre; font-family: ui-monospace, monospace; }
+.row .account-cell { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.row .account { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Depth >= 2 rows get their padding-left set inline (see app.js) since it
+   scales with depth rather than being fixed per level. */
+.row .account.indented { color: var(--text-secondary); font-size: 13px; }
 
-.amount.positive { color: var(--positive); }
-.amount.negative { color: var(--negative); }
-.amount.zero { color: var(--muted); }
+.amount { font-variant-numeric: proportional-nums; font-weight: 600; }
+/* Balance/Register color by raw ledger sign (matches the CLI's convention),
+   which is a different meaning from Reports' income(blue)/expense(red) — an
+   "expenses" account normally shows a positive/debit balance, so coloring it
+   blue here would visually contradict "blue = income" on the Reports tab. */
+.amount.positive { color: var(--good); }
+.amount.negative { color: var(--expense); }
+.amount.zero { color: var(--text-muted); }
 
 .total-row {
   display: flex;
   justify-content: space-between;
-  padding: 12px 8px;
-  font-weight: 600;
-  border-top: 2px solid var(--border);
-  margin-top: 4px;
+  align-items: baseline;
+  padding: 14px 4px 4px;
+  font-weight: 700;
+  font-size: 16px;
+  border-top: 2px solid var(--baseline);
+  margin-top: 6px;
 }
+
+/* ---- Register ---- */
+
+.day-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin: 18px 4px 6px;
+}
+.day-header:first-child { margin-top: 4px; }
 
 .register-entry {
-  padding: 10px 8px;
-  border-bottom: 1px solid var(--border);
-}
-.register-entry .meta {
   display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  color: var(--muted);
+  align-items: center;
+  padding: 10px 12px;
+  gap: 12px;
+  border-bottom: 1px solid var(--gridline);
 }
-.register-entry .main {
-  display: flex;
-  justify-content: space-between;
-  font-size: 15px;
-  margin-top: 2px;
-}
+.register-entry:last-child { border-bottom: none; }
+.register-entry .entry-main { flex: 1; min-width: 0; }
+.register-entry .desc { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.register-entry .right { text-align: right; flex-shrink: 0; }
+.register-entry .running { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
-form { display: flex; flex-direction: column; gap: 10px; }
+/* ---- Charts ---- */
 
-label { font-size: 13px; color: var(--muted); }
+.chart-card svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart-legend { display: flex; gap: 16px; margin-bottom: 8px; font-size: 12px; color: var(--text-secondary); }
+.chart-legend .swatch { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+.bar-list-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+.bar-list-row .body { flex: 1; min-width: 0; }
+.bar-list-row .meta { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
+.bar-list-row .meta .name { color: var(--text-primary); font-weight: 600; }
+.bar-list-row .meta .value { color: var(--text-secondary); font-variant-numeric: proportional-nums; }
+.bar-list-row .track { background: var(--gridline); border-radius: 4px; height: 8px; overflow: hidden; }
+.bar-list-row .fill { height: 100%; border-radius: 4px; }
+
+.empty-state { color: var(--text-muted); font-size: 14px; text-align: center; padding: 32px 8px; }
+
+/* ---- Forms ---- */
+
+form { display: flex; flex-direction: column; gap: 12px; }
+
+label { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
 
 input, select {
-  background: var(--panel);
+  background: var(--card);
   border: 1px solid var(--border);
-  color: var(--text);
-  border-radius: 8px;
-  padding: 10px;
-  font-size: 15px;
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 11px 12px;
+  font-size: 16px;
   width: 100%;
+  font-family: inherit;
+}
+input:focus, select:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
-.posting-row {
-  display: flex;
-  gap: 8px;
-}
-.posting-row input:first-child { flex: 2; }
-.posting-row input:last-child { flex: 1; }
+.posting-row { display: flex; gap: 8px; }
+.posting-row input:first-child { flex: 3; }
+.posting-row input:last-child { flex: 2; }
 
 button.primary {
   background: var(--accent);
   color: white;
   border: none;
-  border-radius: 8px;
-  padding: 12px;
-  font-size: 15px;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 16px;
+  font-weight: 600;
   cursor: pointer;
-  margin-top: 8px;
+  margin-top: 4px;
 }
+button.primary:active { opacity: 0.85; }
 
 button.secondary {
   background: none;
   border: 1px dashed var(--border);
-  color: var(--muted);
-  border-radius: 8px;
-  padding: 10px;
+  color: var(--text-secondary);
+  border-radius: 10px;
+  padding: 11px;
+  font-size: 14px;
   cursor: pointer;
 }
 
-.status { margin-top: 10px; font-size: 14px; }
-.status.error { color: var(--negative); }
-.status.ok { color: var(--positive); }
+.status { margin-top: 4px; font-size: 14px; }
+.status.error { color: var(--expense); }
+.status.ok { color: var(--good); }
 
-.hint { color: var(--muted); font-size: 13px; margin-top: 4px; }
+.hint { color: var(--text-muted); font-size: 13px; margin-top: 4px; }
+
+/* ---- Quick-add: category grid + numeric keypad (the primary, "simple
+   expense tracker" flow — no account paths to type). "進階模式" below still
+   exposes the full double-entry form for anything this can't express. ---- */
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px 8px;
+  margin: 4px 0 18px;
+}
+.category-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-size: 12px;
+  padding: 2px;
+}
+.category-item .icon-circle {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  box-shadow: var(--shadow);
+}
+
+.link-btn {
+  display: block;
+  width: 100%;
+  background: none;
+  border: none;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.keypad-panel .keypad-back {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 14px;
+  padding: 6px 2px;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.keypad-display {
+  text-align: center;
+  padding: 18px 0 14px;
+}
+.keypad-category { font-size: 14px; color: var(--text-secondary); font-weight: 600; }
+.keypad-amount { font-size: 44px; font-weight: 800; margin-top: 4px; letter-spacing: -0.02em; }
+
+.keypad-fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+
+.keypad-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.keypad-grid button {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 20px;
+  font-weight: 600;
+  padding: 16px 0;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.keypad-grid button:active { background: var(--gridline); }
+
+/* ---- Donut chart (category breakdown) ---- */
+
+.donut-wrap { display: flex; justify-content: center; margin-bottom: 16px; }
+.donut-wrap svg { width: 200px; height: 200px; }
+.donut-center-label { font-size: 12px; fill: var(--text-secondary); }
+.donut-center-value { font-size: 22px; font-weight: 800; fill: var(--text-primary); }
+
+.legend-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--gridline); }
+.legend-row:last-child { border-bottom: none; }
+.legend-row .swatch-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+.legend-row .legend-main { flex: 1; display: flex; justify-content: space-between; font-size: 14px; }
+.legend-row .legend-name { font-weight: 600; }
+.legend-row .legend-pct { color: var(--text-muted); font-size: 12px; margin-left: 6px; }
+
+.segmented {
+  display: flex;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+  margin-bottom: 16px;
+}
+.segmented button {
+  flex: 1;
+  background: none;
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.segmented button.active { background: var(--card); color: var(--text-primary); box-shadow: var(--shadow); }
+
+/* ---- Bottom tab bar ---- */
+
+nav.tabbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+  padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  z-index: 10;
+}
+
+nav.tabbar button {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 6px 2px;
+  font-size: 11px;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+nav.tabbar button svg { width: 22px; height: 22px; }
+nav.tabbar button.active { color: var(--accent); }
+nav.tabbar button.active svg { filter: drop-shadow(0 0 0.5px currentColor); }
