@@ -1,0 +1,18 @@
+; example.journal — a minimal ledgerkit journal to try the CLI against.
+;
+; Try:
+;   LEDGERKIT_JOURNAL=example.journal ledgerkit balance
+;   LEDGERKIT_JOURNAL=example.journal ledgerkit register assets:cash
+;   LEDGERKIT_JOURNAL=example.journal ledgerkit check
+
+2026-01-01 * 期初餘額
+    assets:cash    $10000
+    equity:opening-balance
+
+2026-01-03 * 買咖啡
+    expenses:food:coffee    $120
+    assets:cash
+
+2026-01-05 * 領薪水
+    assets:cash    $50000
+    income:salary

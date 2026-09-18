@@ -1,0 +1,12 @@
+/ledgerkit
+
+# a real journal is personal financial data — only the example belongs in git.
+*.journal
+!example.journal
+
+# CSV import dedupe state and personal bank exports
+*.ledgerkit-import-state
+*.csv
+
+# goreleaser's build output — reproducible from .goreleaser.yaml, never committed.
+/dist
