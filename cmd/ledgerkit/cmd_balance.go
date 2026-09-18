@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"ledgerkit/internal/journal"
 	"ledgerkit/internal/ledger"
 	"ledgerkit/internal/render"
 )
@@ -25,11 +26,11 @@ func runBalance(args []string) error {
 	if err != nil {
 		return err
 	}
-	fromT, err := parseDateFlag(*from)
+	fromT, err := journal.ParseOptionalDate(*from)
 	if err != nil {
 		return err
 	}
-	toT, err := parseDateFlag(*to)
+	toT, err := journal.ParseOptionalDate(*to)
 	if err != nil {
 		return err
 	}
@@ -37,20 +38,15 @@ func runBalance(args []string) error {
 	root := ledger.BuildTree(j.Transactions, ledger.Filter{AccountPattern: pattern, From: fromT, To: toT})
 
 	var rows [][]string
-	var printNode func(n *ledger.Node, depth int)
-	printNode = func(n *ledger.Node, depth int) {
-		for _, child := range n.SortedChildren() {
-			for _, commodity := range child.Total.Commodities() {
-				v := child.Total.Values[commodity]
-				rows = append(rows, []string{
-					strings.Repeat("  ", depth) + child.Name,
-					render.Amount(child.Total.Format(commodity), v.Sign()),
-				})
-			}
-			printNode(child, depth+1)
+	for _, r := range ledger.FlattenBalance(root) {
+		for _, commodity := range r.Amounts.Commodities() {
+			v := r.Amounts.Values[commodity]
+			rows = append(rows, []string{
+				strings.Repeat("  ", r.Depth) + r.Name,
+				render.Amount(r.Amounts.Format(commodity), v.Sign()),
+			})
 		}
 	}
-	printNode(root, 0)
 
 	fmt.Print(render.Table([]string{"account", "balance"}, rows))
 	for _, commodity := range root.Total.Commodities() {

@@ -1,4 +1,9 @@
 /ledgerkit
+/ledgerkit-server
+
+# Capacitor/Android tooling — reproducible from mobile/package.json and
+# `npx cap add android`; android/ has its own .gitignore for build output.
+/mobile/node_modules
 
 # a real journal is personal financial data — only the example belongs in git.
 *.journal

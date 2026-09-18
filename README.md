@@ -67,15 +67,58 @@ LedgerKit 支援 hledger/ledger journal 語法的一個子集：
 
 所有指令都吃 `-journal <path>` 覆蓋要讀寫的 journal 檔案（預設看 `LEDGERKIT_JOURNAL` 環境變數，否則是 `./ledger.journal`）。
 
+## 網頁 / HTTP API：`ledgerkit-server`
+
+`cmd/ledgerkit-server` 是另一個執行檔，把同一份 journal 檔案透過 HTTP 開放出來，給網頁介面（也內建在同一個執行檔裡）跟手機 App 用。CLI 跟 server 讀寫同一份 journal 檔案，是同一份資料。
+
+```bash
+export LEDGERKIT_JOURNAL=~/finance.journal
+export LEDGERKIT_API_TOKEN=$(openssl rand -hex 32)   # 必填，沒設會拒絕啟動
+export LEDGERKIT_ADDR=:8080                            # 預設 :8080
+
+make run-server
+# 瀏覽器打開 http://localhost:8080/，在「Settings」分頁貼上上面那組 token
+```
+
+網頁有四個分頁：Balance（餘額報表）、Register（逐筆流水帳）、Add（記一筆帳）、Settings（設定 API token；如果網頁跟 API 不同源，例如手機 App，這裡還要填伺服器網址）。
+
+**API 端點**（都需要 `Authorization: Bearer <token>`）：
+
+| 方法/路徑 | 說明 |
+|---|---|
+| `GET /api/accounts` | 帳戶清單 |
+| `GET /api/balance?account=&from=&to=` | 依帳戶階層的餘額報表 |
+| `GET /api/register?account=&from=&to=` | 逐筆過帳與累計餘額 |
+| `GET /api/check` | journal 驗證結果 |
+| `POST /api/transactions` | 新增一筆交易，body 見 `cmd/ledgerkit-server/dto.go` |
+
+**已知限制**：
+- server 只講 HTTP，沒有做 TLS——要從家裡以外的網路連，自己接 Tailscale 或 Caddy 之類的反向代理補 TLS，不要把 `LEDGERKIT_API_TOKEN` 用明碼 HTTP 傳過公開網路。
+- server 內部用一個 mutex 序列化自己的讀寫，但擋不住 CLI 跟 server 同時寫同一份 journal 檔案——個人使用情境下風險低，目前沒做跨行程鎖。
+
+## 手機 App（Capacitor + Android）
+
+`mobile/` 是一個 Capacitor 專案，把 `cmd/ledgerkit-server/web` 那份網頁包裝成 Android App（`capacitor.config.json` 的 `webDir` 直接指過去，不是另外複製一份維護）。
+
+```bash
+cd mobile
+npm install
+npx cap sync android   # 把最新的 web/ 內容同步進 android/ 專案
+npx cap open android   # 用 Android Studio 開啟，接著跟一般 Android 專案一樣建置/簽名/安裝
+```
+
+**目前狀態**：專案骨架已經建好（`npx cap doctor` 通過），但實際編譯 APK需要 Android Studio + JDK + Android SDK——這幾個目前沒裝，所以還沒有人真的建置過、也還沒在實機上測試過。裝好 Android Studio 之後，打開 `mobile/android` 應該就能直接建置；App 執行時要在 Settings 分頁填伺服器網址（手機連得到的位址，例如你的 Tailscale IP）跟 API token。
+
 ## Development
 
 ```bash
-make build   # 編譯出 ./ledgerkit
-make test    # go test ./... -race
-make lint    # gofmt -l . && go vet ./...
+make build          # 編譯出 ./ledgerkit
+make build-server   # 編譯出 ./ledgerkit-server
+make test           # go test ./... -race
+make lint           # gofmt -l . && go vet ./...
 ```
 
-核心邏輯分三層：`internal/journal` 負責 parse/format 與型別（金額用手刻定點小數避免浮點誤差）、`internal/ledger` 負責 balance/register 的彙總邏輯、`internal/importer` 負責 CSV 匯入與去重。`cmd/ledgerkit` 只做參數解析與輸出排版（`internal/render`）。
+核心邏輯分三層：`internal/journal` 負責 parse/format 與型別（金額用手刻定點小數避免浮點誤差）、`internal/ledger` 負責 balance/register 的彙總邏輯（`FlattenBalance` 這個走訪函式同時給 CLI 跟 HTTP API 用，兩邊輸出保證一致）、`internal/importer` 負責 CSV 匯入與去重。`cmd/ledgerkit` 只做參數解析與輸出排版（`internal/render`）；`cmd/ledgerkit-server` 只做 HTTP 路由與 JSON 轉換（`dto.go`），domain 邏輯一樣重用 `internal/journal`／`internal/ledger`，不重寫。
 
 ## License
 

@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>LedgerKit</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>LedgerKit</h1>
+  </header>
+
+  <nav>
+    <button data-view="balance" class="active">Balance</button>
+    <button data-view="register">Register</button>
+    <button data-view="add">Add</button>
+    <button data-view="settings">Settings</button>
+  </nav>
+
+  <main>
+    <section id="view-balance" class="view active">
+      <div id="balance-rows"></div>
+      <div id="balance-total"></div>
+    </section>
+
+    <section id="view-register" class="view">
+      <div id="register-entries"></div>
+    </section>
+
+    <section id="view-add" class="view">
+      <form id="add-form">
+        <div>
+          <label for="add-date">Date</label>
+          <input type="date" id="add-date" />
+        </div>
+        <div>
+          <label for="add-desc">Description</label>
+          <input type="text" id="add-desc" placeholder="買咖啡" required />
+        </div>
+        <label>Postings</label>
+        <div id="postings"></div>
+        <button type="button" class="secondary" id="add-posting">+ posting</button>
+        <button type="submit" class="primary">Save</button>
+        <div id="add-status" class="status"></div>
+      </form>
+    </section>
+
+    <section id="view-settings" class="view">
+      <form id="settings-form">
+        <div>
+          <label for="server-url">Server URL</label>
+          <input type="text" id="server-url" placeholder="http://localhost:8080 (留空 = 同一個網址)" />
+        </div>
+        <div>
+          <label for="api-token">API Token</label>
+          <input type="password" id="api-token" placeholder="Bearer token" />
+        </div>
+        <button type="submit" class="primary">Save</button>
+        <div id="settings-status" class="status"></div>
+      </form>
+      <p class="hint">設定存在這台裝置的瀏覽器/App 本機儲存空間，不會同步到別的裝置。</p>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

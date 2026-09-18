@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 
+	"ledgerkit/internal/journal"
 	"ledgerkit/internal/ledger"
 	"ledgerkit/internal/render"
 )
@@ -24,11 +25,11 @@ func runRegister(args []string) error {
 	if err != nil {
 		return err
 	}
-	fromT, err := parseDateFlag(*from)
+	fromT, err := journal.ParseOptionalDate(*from)
 	if err != nil {
 		return err
 	}
-	toT, err := parseDateFlag(*to)
+	toT, err := journal.ParseOptionalDate(*to)
 	if err != nil {
 		return err
 	}

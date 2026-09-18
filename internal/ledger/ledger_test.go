@@ -86,6 +86,41 @@ func TestBuildTreePreservesSuffixCommodityFormat(t *testing.T) {
 	}
 }
 
+func TestFlattenBalanceOrderAndDepth(t *testing.T) {
+	txns := parseTestJournal(t, sampleJournal)
+	root := BuildTree(txns, Filter{})
+	rows := FlattenBalance(root)
+
+	var got []string
+	for _, r := range rows {
+		got = append(got, strings.Repeat("  ", r.Depth)+r.Name+" ("+r.FullAccount+")")
+	}
+	want := []string{
+		"assets (assets)",
+		"  cash (assets:cash)",
+		"expenses (expenses)",
+		"  food (expenses:food)",
+		"    coffee (expenses:food:coffee)",
+		"    lunch (expenses:food:lunch)",
+		"income (income)",
+		"  salary (income:salary)",
+	}
+	if len(got) != len(want) {
+		t.Fatalf("got %d rows, want %d: %v", len(got), len(want), got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("row %d = %q, want %q (full: %v)", i, got[i], want[i], got)
+		}
+	}
+
+	for _, r := range rows {
+		if r.FullAccount == "assets:cash" && r.Amounts.Values["$"].String() != "49680" {
+			t.Fatalf("assets:cash row amount = %s, want 49680", r.Amounts.Values["$"].String())
+		}
+	}
+}
+
 func TestRegisterRunningBalance(t *testing.T) {
 	txns := parseTestJournal(t, sampleJournal)
 	entries := Register(txns, Filter{AccountPattern: "assets:cash"})

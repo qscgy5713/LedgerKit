@@ -1,0 +1,5 @@
+{
+  "appId": "com.qscgy5713.ledgerkit",
+  "appName": "LedgerKit",
+  "webDir": "../cmd/ledgerkit-server/web"
+}

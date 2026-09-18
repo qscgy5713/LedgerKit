@@ -89,3 +89,31 @@ func computeTotals(n *Node) journal.Amounts {
 	n.Total = total
 	return total
 }
+
+// BalanceRow is one printable line of a balance report: an account at a
+// given indentation depth with its subtree total. Name is just this row's
+// account segment (for indented display); FullAccount is the complete
+// ":"-joined path (for consumers that need to act on the account, e.g. a
+// web UI linking a balance row to its register).
+type BalanceRow struct {
+	Name        string
+	FullAccount string
+	Depth       int
+	Amounts     journal.Amounts
+}
+
+// FlattenBalance walks the tree depth-first in sorted account order,
+// producing the same traversal both the CLI (`ledgerkit balance`) and the
+// HTTP API render from.
+func FlattenBalance(root *Node) []BalanceRow {
+	var rows []BalanceRow
+	var walk func(n *Node, depth int)
+	walk = func(n *Node, depth int) {
+		for _, child := range n.SortedChildren() {
+			rows = append(rows, BalanceRow{Name: child.Name, FullAccount: child.FullName, Depth: depth, Amounts: child.Total})
+			walk(child, depth+1)
+		}
+	}
+	walk(root, 0)
+	return rows
+}
